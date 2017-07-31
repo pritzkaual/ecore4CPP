@@ -33,6 +33,8 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/any.hpp"
 
+#include "XHandler.hpp" // used for Persistence
+
 //*********************************
 // generated Includes
 
@@ -111,6 +113,11 @@ virtual public [ClassWithNamespace(aClass,sClass)/][/for]
 			// Union Getter
 			//*********************************
 			[aClass.generateUnionGetterDeclaretaion(false)/] 
+			
+			//*********************************
+			// Persistence Functions
+			//*********************************
+			virtual void save(std::shared_ptr<persistence::XHandler> handler) const = 0;
 	};
 
 }

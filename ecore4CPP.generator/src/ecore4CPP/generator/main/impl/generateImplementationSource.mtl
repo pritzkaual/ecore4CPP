@@ -258,5 +258,15 @@ std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStat
 // Structural Feature Getter/Setter
 //*********************************
 [aClass.generateeGetImpl()/]
+
+//*********************************
+// Persistence Functions
+//*********************************
+void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> handler) const
+{
+	std::shared_ptr<[needNamespace(aClass.ePackage, className)/]> tmp_object = std::dynamic_pointer_cast<[needNamespace(aClass.ePackage, className)/]>( this );
+
+}
+
 [/file]
 [/template]

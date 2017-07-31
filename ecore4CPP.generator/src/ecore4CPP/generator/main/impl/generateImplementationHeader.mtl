@@ -95,6 +95,11 @@ virtual public [ClassWithNamespace(aClass, sClass)/]Impl[/for][if (aClass.eSuper
 			
 			[aClass.generateeGetDel(true)/]
 			
+			//*********************************
+			// Persistence Functions
+			//*********************************
+			virtual void save(std::shared_ptr<persistence::XHandler> handler) const;
+
 		protected:
 			virtual std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> eStaticClass() const;
 	};

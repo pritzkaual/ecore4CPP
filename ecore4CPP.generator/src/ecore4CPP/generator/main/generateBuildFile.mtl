@@ -136,6 +136,8 @@ model {
 [if (aPackage.name='uml')]
 						srcDirs System.getenv('MDE4CPP_HOME')+"/application/include/util"
 [/if]
+						srcDirs System.getenv('MDE4CPP_HOME')+"/application/include/persistence"
+
                         include "**/*.hpp"
                     }
 [if (aPackage.metaModelLibraries()->select(not(name = aPackage.name))->size() > 0)]
