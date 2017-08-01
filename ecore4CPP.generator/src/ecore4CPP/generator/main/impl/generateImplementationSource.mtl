@@ -263,7 +263,10 @@ std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStat
 // Persistence Functions
 //*********************************
 void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> handler) const
-{	
+{
+	//
+	// Add attributes
+	//
 [for (aAttribute : EAttribute | aClass.eAllAttributes->select(eAtt: EAttribute|(eAtt.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
 [if (not(aAttribute.upperBound = 1))]
 	handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() ); // upperBound != 1 so [aAttribute.GetterName()/]() is a list/bag/union 
@@ -280,32 +283,78 @@ void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> 
 [/for]
 
 [comment]
-//1 teilweise
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false or eRef.hasSubset()) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//2 falsch
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false and eRef.hasSubset()) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//3 falsch
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false or eRef.hasSubset()) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//4 teilweise
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//5 teilweise
+//1.0 (eRef.containment = false)
 [for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false))->asOrderedSet()->sortedBy(name))]
 [ref.name/]
 [/for]
 
-//6 funktioniert (ungetestet)
+//1.1 (eRef.containment = true)
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//2.0 (eRef.containment = false or eRef.hasSubset()) and (not eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false or eRef.hasSubset()) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//2.1 (eRef.containment = false or eRef.hasSubset()) and (eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false or eRef.hasSubset()) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//2.2 (eRef.containment = true or eRef.hasSubset()) and (not eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true or eRef.hasSubset()) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//2.3 (eRef.containment = true or eRef.hasSubset()) and (eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true or eRef.hasSubset()) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//3.0 (eRef.containment = true or eRef.hasSubset())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true or eRef.hasSubset()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//3.1 (eRef.containment = false or eRef.hasSubset())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false or eRef.hasSubset()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//4.0 (eRef.containment = true) and (not eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true ) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//4.1 (eRef.containment = true) and (eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//4.2 (eRef.containment = false) and (not eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//4.3 (eRef.containment = false) and (eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false ) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+
+//5.0 (eRef.hasSubset()) and (not eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.hasSubset()) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//5.1 (eRef.hasSubset()) and (eRef.isUnion())
+[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.hasSubset()) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
+[ref.name/]
+[/for]
+
+//6 sollte funktionieren (ungetestet)
 [for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false ))->asOrderedSet()->sortedBy(name))]
 [if (hasDocKeyX('suppressedIsSetVisibility'))]
 	handler->addReference("[aReference.name/]", this->[aReference.GetterName()/]());
@@ -314,21 +363,32 @@ void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> 
 [/if]
 [/for]
 
-//7 funktioniert[/comment]
+[/comment]
+
+	//
+	// Add references
+	//
 [for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.unsettable = true))->asOrderedSet()->sortedBy(name))]
 	handler->addReference("[aReference.name/]", this->[aReference.GetterName()/]());
 [/for]
-
-
-[for (aReference : EReference | aClass.eReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
+	//
+	// Add new tags (from references)
+	//
+[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
 [if (aReference.upperBound = 1)]
- 
+	// TODO implement "aReference.upperBound = 1" for '[aReference.name/]'
 [else]
 	[aReference.generateReferenceType()/] list_[aReference.name/] = this->[aReference.GetterName()/]();
 
 	if ( list_[aReference.name/]->size() != 0) {
 		for ( std::shared_ptr<[aReference.eType.generateType()/]> [aReference.name/] : *list_[aReference.name/] ) {
 			handler->createAndAddElement( "[aReference.name/]" );
+					
+			std::shared_ptr<ecore::EClass> meta_class = [aReference.name/]->eClass();
+			if (meta_class->getName().compare("[aReference.eType.name/]") != 0)
+			{
+				handler->addAttribute( "xsi:type", handler->getType([aReference.name/]) );
+			}
 			[aReference.name/]->save( handler );
 			handler->release();
 		}
