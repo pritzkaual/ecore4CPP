@@ -120,7 +120,9 @@
 
 [query public hasDocumentationnAnnotation(aModelElement : EModelElement) : Boolean = eAnnotations->select(source = 'http://www.eclipse.org/emf/2002/GenModel')->notEmpty()  /]
 [query public DocumentationAnnotation(aModelElement : EModelElement) : EAnnotation = eAnnotations->select(source = 'http://www.eclipse.org/emf/2002/GenModel')->first() /]
-
+[comment]
+[query public hasDocKeyX(aModelElement : EModelElement, aKey:String) : Boolean = if aModelElement.hasDocumentationnAnnotation() then aModelElement.DocumentationAnnotation().details->select(key = aKey)->notEmpty() else false endif /]
+[/comment]
 [query public hasDocKey(aModelElement : EModelElement) : Boolean = if aModelElement.hasDocumentationnAnnotation() then aModelElement.DocumentationAnnotation().details->select(key = 'documentation')->notEmpty() else false endif /]
 [query public docDescription(aModelElement : EModelElement) : String = aModelElement.DocumentationAnnotation().details->select(key = 'documentation')->first().value /]
 

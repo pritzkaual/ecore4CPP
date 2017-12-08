@@ -94,10 +94,13 @@ virtual public [ClassWithNamespace(aClass, sClass)/]Impl[/for][if (aClass.eSuper
 			//*********************************
 			
 			[aClass.generateeGetDel(true)/]
+			[aClass.generateeSetDecl(true)/]
+
 			
 			//*********************************
 			// Persistence Functions
 			//*********************************
+			virtual void load(std::shared_ptr<persistence::XHandler> handler);
 			virtual void save(std::shared_ptr<persistence::XHandler> handler) const;
 
 		protected:

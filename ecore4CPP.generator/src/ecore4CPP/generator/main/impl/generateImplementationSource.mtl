@@ -258,16 +258,198 @@ std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStat
 // Structural Feature Getter/Setter
 //*********************************
 [aClass.generateeGetImpl()/]
+[aClass.generateeSetImpl()/]
+
 
 //*********************************
 // Persistence Functions
 //*********************************
+void [aClass.name.concat('Impl')/]::load(std::shared_ptr<persistence::XHandler> handler) 
+{
+try{
+	std::cout << "| WARNING  | " << " Called " << __PRETTY_FUNCTION__ << " while is not implemented yet." << std::endl;
+
+	// get EcoreFactory
+	std::shared_ptr<ecore::EcoreFactory> factory = ecore::EcoreFactory::eInstance();
+	
+	// Set Attributes
+
+	// get list of current Node Attributes	
+	std::map<std::string, std::string> attr_list = handler->getAttributeList();
+	
+	std::map<std::string, std::string>::const_iterator iter;
+
+[for (aAttribute : EAttribute | aClass.eAllAttributes->select(eAtt: EAttribute|(eAtt.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
+[if (aAttribute.eType.oclIsKindOf(EDataType) and not(aAttribute.eType.name = 'EJavaClass'))]
+[comment]
+// Attributes that are from type EJavaClass (void*) has not to export to xml. 
+[/comment]
+[if (not(aAttribute.upperBound = 1))]
+	//handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() ); // upperBound != 1 so [aAttribute.GetterName()/]() is a list/bag/union
+	// TODO needs an implementation to set list of strings to this attribute
+	std::cout << "| ERROR    | " << __PRETTY_FUNCTION__ << " needs an implementation to set list of strings to this attribute." << std::endl; 
+[else]
+	iter = attr_list.find("[aAttribute.name/]");
+	if ( iter != attr_list.end() )
+	{
+[comment]
+//[aAttribute.eType/]
+//[aAttribute.eType.name/]
+[/comment]
+[if (generateType(aAttribute.eType) = 'bool')]
+		// this attribute is a 'bool'
+		bool value;
+		std::istringstream(iter->second) >> std::boolalpha >> value;
+[elseif ((generateType(aAttribute.eType) = 'int'))]
+		// this attribute is a 'int'
+		int value;
+		std::istringstream ( iter->second ) >> value;
+[elseif ((generateType(aAttribute.eType) = 'long'))]
+		// this attribute is a 'long'
+		long value;
+		std::istringstream ( iter->second ) >> value;
+[elseif ((generateType(aAttribute.eType) = 'float'))]
+		// this attribute is a 'float'
+		float value;
+		std::istringstream ( iter->second ) >> value;
+[elseif ((generateType(aAttribute.eType) = 'double'))]
+		// this attribute is a 'double'
+		double value;
+		std::istringstream ( iter->second ) >> value;
+[elseif ((generateType(aAttribute.eType) = 'char'))]
+		// this attribute is a 'char'
+		char value;
+		std::istringstream ( iter->second ) >> value;
+[elseif ((generateType(aAttribute.eType) = 'std::string'))]
+		// this attribute is a 'std::string'
+		std::string value;
+		value = iter->second;
+[else]
+		// TODO this attribute has a non handle type
+		std::cout << "| ERROR    | " << __PRETTY_FUNCTION__ << " handle type of '[aAttribute.name/]'" << " [aAttribute.eType/]" << std::endl; 
+		value = "";
+[/if]
+		this->[aAttribute.SetterName()/](value);
+	}
+[/if]
+[/if]
+[/for]
+	
+	// Set References (containment == false)
+	std::shared_ptr<ecore::EClass> metaClass = this->eClass(); // get MetaClass
+	std::shared_ptr<ecore::EStructuralFeature> esf;
+[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.unsettable = true))->asOrderedSet()->sortedBy(name)) separator ('\n')]
+	// TODO handle references to other objects
+	std::cout << "| WARNING  | " << __PRETTY_FUNCTION__ << " handle references to other objects '[aReference.name/]'" << " [aReference.eType/]" << std::endl; 
+	//[aReference.name/]->setContainer( this ); // TODO remove comment
+	// TODO here
+	esf = metaClass->getEStructuralFeature("[aReference.name/]");
+[/for]
+
+	//
+	// Create new objects (from references (containment == true))
+	//
+[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
+[if (aReference.upperBound = 1)]
+	// TODO implement "aReference.upperBound = 1" for '[aReference.name/]'
+	std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " implement 'aReference.upperBound = 1' for '[aReference.name/]'" << std::endl;
+[else]
+	[aReference.generateReferenceType()/] list_[aReference.name/] = this->[aReference.GetterName()/]();
+[/if]
+[/for]
+	
+	int numChildren = handler->getNumOfChildren();
+	//std::cout << "| DEBUG    |" << " Children: " << numChildren << std::endl;
+	
+	std::string nodeName;
+	int ii;
+	for(ii = 0; ii < numChildren; ++ii)
+	{
+		//std::cout << "| DEBUG    |" << " Child: " << ii << std::endl;
+		nodeName = handler->getNextNodeName();
+
+[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
+[if (aReference.upperBound = 1)]
+		// TODO implement "aReference.upperBound = 1" for '[aReference.name/]'
+		std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " implement 'aReference.upperBound = 1' for '[aReference.name/]'" << std::endl;
+[else]
+		if ( nodeName.compare("[aReference.name/]") == 0 )
+		{
+			/* 
+			 * Create '[aReference.eType.generateType()/]'
+			 */
+			std::shared_ptr<[aReference.eType.generateType()/]> [aReference.name/];
+
+			// 1a. Create new Object '[aReference.name/]' with Factory.
+[comment]
+//[aReference.eType.oclAsType(EClass).abstract/]
+//[aReference.eType/]
+[/comment]
+[if (aReference.eType.oclAsType(EClass).abstract = true)]
+			attr_list = handler->getAttributeList();
+			iter = attr_list.find("xsi:type");
+			if ( iter != attr_list.end() )
+			{
+				std::string _type = iter->second;
+				size_t const double_dot = _type.find(L':', 0);
+				std::string _type_ns = _type.substr(0, double_dot); // TODO is not used in this case
+				std::string _type_name = _type.substr(double_dot + 1);
+				[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>(factory->create(_type_name));
+			}
+			else
+			{
+				std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " no xsi:type for attribute '[aReference.name/]'" << std::endl;
+			}
+[else]
+			[aReference.name/].reset(factory->create[aReference.eType.name/]()); 
+[/if]
+
+			// 1b. And set Container to Object 'this'.
+			[aReference.name/]->setContainer(handler->getCurrentObj());
+
+			// 2. Append '[aReference.name/]' to list_[aReference.name/].
+			list_[aReference.name/]->push_back([aReference.name/]);
+
+			// 3. Report Handler to set '[aReference.name/]' as new current Object.
+			handler->setCurrentObj([aReference.name/]);
+
+			// 4. Call recursively '[aReference.name/].load().
+			[aReference.name/]->load(handler);
+
+			// 5. Report Handler to set 'this' as new current Object.
+			handler->releaseObj(); // TODO use later API release() of LoadHandler.
+
+			// 6. Add '[aReference.name/]' to Handler's internal Map, that is used for resolving references.
+			handler->addToMap([aReference.name/]);
+		}
+[/if]
+[/for]
+	}
+	
+	//std::shared_ptr<ecore::EPackage> pck_root( factory->createEPackage() );
+}
+catch (std::exception& e)
+{
+	std::cout << e.what() << std::endl;
+}
+catch (...) 
+{
+	std::cout << "Exception occurred" << std::endl;
+}	
+}
+
+
+
 void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> handler) const
 {
 	//
 	// Add attributes
 	//
 [for (aAttribute : EAttribute | aClass.eAllAttributes->select(eAtt: EAttribute|(eAtt.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
+[if (aAttribute.eType.oclIsKindOf(EDataType) and not(aAttribute.eType.name = 'EJavaClass'))]
+[comment]
+// Attributes that are from type EJavaClass (void*) has not to export to xml. 
+[/comment]
 [if (not(aAttribute.upperBound = 1))]
 	handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() ); // upperBound != 1 so [aAttribute.GetterName()/]() is a list/bag/union 
 [else]
@@ -279,6 +461,9 @@ void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> 
 	[else]
 	handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() );
 	[/if]
+[/if]
+[else]
+// [aAttribute.eType/]
 [/if]
 [/for]
 
@@ -371,26 +556,32 @@ void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> 
 [for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.unsettable = true))->asOrderedSet()->sortedBy(name))]
 	handler->addReference("[aReference.name/]", this->[aReference.GetterName()/]());
 [/for]
+	
 	//
 	// Add new tags (from references)
 	//
 [for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
 [if (aReference.upperBound = 1)]
 	// TODO implement "aReference.upperBound = 1" for '[aReference.name/]'
+	std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " implement 'aReference.upperBound = 1' for '[aReference.name/]'" << std::endl;
 [else]
 	[aReference.generateReferenceType()/] list_[aReference.name/] = this->[aReference.GetterName()/]();
 
 	if ( list_[aReference.name/]->size() != 0) {
 		for ( std::shared_ptr<[aReference.eType.generateType()/]> [aReference.name/] : *list_[aReference.name/] ) {
 			handler->createAndAddElement( "[aReference.name/]" );
-					
+[if (aReference.eType.oclAsType(EClass).abstract = true)]
+			handler->addAttribute( "xsi:type", handler->getType([aReference.name/]) );
+[/if]
+[comment]
 			std::shared_ptr<ecore::EClass> meta_class = [aReference.name/]->eClass();
 			if (meta_class->getName().compare("[aReference.eType.name/]") != 0)
 			{
 				handler->addAttribute( "xsi:type", handler->getType([aReference.name/]) );
 			}
-			[aReference.name/]->save( handler );
-			handler->release();
+[/comment]
+			[aReference.name/]->save( handler ); // recusive call
+			handler->release(); // call handler to step to previous level
 		}
 	}
 [/if]

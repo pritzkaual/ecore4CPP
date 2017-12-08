@@ -65,6 +65,17 @@ std::shared_ptr<[eOperation.eGenericType.generateCppType()/]> [else]
 [eOperation.eGenericType.generateCppType()/] [/if][/comment]
 [/template]
 
+[comment]
+[template public generateEStructuralFeatureType(eStructuralFeature : EStructuralFeature)]
+[if (eStructuralFeature.eType.oclIsTypeOf(EAttribute))]
+[eStructuralFeaturegenerateReferenceType()/]
+[elseif ((eStructuralFeature.eType.oclIsTypeOf(EReference)))]
+
+[else]
+[eAttribute.eGenericType.generateCppType()/] [/if]
+[/template]
+[/comment]
+
 [template public generateReferenceType(eReference : EReference)]
 [generateReferenceType(true)/]
 [/template]
