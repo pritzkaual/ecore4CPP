@@ -81,7 +81,9 @@ std::shared_ptr<ecore::EObject> [className/]::create(const unsigned int classID,
 					case  [anEPackage.name.toUpperFirst()/]Package::[aReference.memberNameUpper()/]: 
 					{
 						auto castedContainer = std::dynamic_pointer_cast<[aReference.generateReferenceType(false)/]>(container);
-						return this->create[aClass.name/]_in_[aReference.name.toUpperFirst()/](castedContainer);
+						//return this->create[aClass.name/]_in_[aReference.name.toUpperFirst()/](castedContainer);
+						return this->create[aClass.name/]_in_(castedContainer);
+
 					}
 					[/for]
 					default:
@@ -90,7 +92,9 @@ std::shared_ptr<ecore::EObject> [className/]::create(const unsigned int classID,
 				[elseif(ref->size()=1)]
 				auto castedContainer = std::dynamic_pointer_cast<[ref->first().generateReferenceType(false)/]>(container);
 				assert(castedContainer);
-				return std::shared_ptr<[aClass.name/]>(this->create[aClass.name/]_in_[ref->first().name.toUpperFirst()/](castedContainer));
+//				return std::shared_ptr<[aClass.name/]>(this->create[aClass.name/]_in_[ref->first().name.toUpperFirst()/](castedContainer));
+				return std::shared_ptr<[aClass.name/]>(this->create[aClass.name/]_in_(castedContainer));
+
 				[/if]
 			[if(ref->size()>0)]}[/if]
 		}
@@ -148,7 +152,8 @@ std::shared_ptr<[aClass.generateTypeClass()/]> [className/]::create[aClass.name/
 }
 [let ref : OrderedSet(EReference) = aClass.getAllContainers()]
 [for(aReference:EReference | ref->sortedBy(name))]
-std::shared_ptr<[aClass.generateTypeClass()/]> [className/]::create[aClass.name/]_in_[aReference.name.toUpperFirst()/]([aReference.generateReferenceType(true)/] par_[aReference.name/]) const
+//std::shared_ptr<[aClass.generateTypeClass()/]> [className/]::create[aClass.name/]_in_[aReference.name.toUpperFirst()/]([aReference.generateReferenceType(true)/] par_[aReference.name/]) const
+std::shared_ptr<[aClass.generateTypeClass()/]> [className/]::create[aClass.name/]_in_([aReference.generateReferenceType(true)/] par_[aReference.name/]) const
 {
 	[if(ref->select(eType = aReference.eType)->size()>1)]
 	std::shared_ptr<[aClass.name.toUpperFirst()/]> element(new [aClass.name.toUpperFirst()/]Impl(par_[aReference.name/], [anEPackage.name.toUpperFirst()/]Package::[aReference.memberNameUpper()/]));
