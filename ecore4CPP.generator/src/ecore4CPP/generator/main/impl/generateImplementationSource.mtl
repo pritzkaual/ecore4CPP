@@ -345,7 +345,7 @@ try{
 			{
 				std::string _type = iter->second;
 				size_t const double_dot = _type.find(L':', 0);
-				std::string _type_ns = _type.substr(0, double_dot); // TODO is not used in this case
+				std::string _type_ns = _type.substr(0, double_dot); // TODO '_type_ns' is not used in this case
 				std::string _type_name = _type.substr(double_dot + 1);
 				[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>(factory->create(_type_name, handler->getCurrentObj<ecore::EObject>()));
 			}
@@ -354,14 +354,22 @@ try{
 				std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " no xsi:type for attribute '[aReference.name/]'" << std::endl;
 			}
 [else]
-			//[aReference.name/] = factory->create[aReference.eType.name/]_in_[aReference.eContainingClass.name/](handler->getCurrentObj<[aReference.eContainingClass.transformType()/]>()); 
-			[aReference.name/] = factory->create[aReference.eType.name/]_in_(handler->getCurrentObj<[aReference.eContainingClass.transformType()/]>());
+			[let aEClass : EClass = aReference.eType.oclAsType(EClass)]
+			[if (aEClass.abstract = false)]
+			[let ref:OrderedSet(EReference) = aEClass.getAllContainers()]
+			[if(ref->size() > 0)]
+			[for(aBackReference : EReference | ref->sortedBy(name))]
+			[aReference.name/] = factory->create[aEClass.name/]_in_[aBackReference.name.toUpperFirst()/](handler->getCurrentObj<[aReference.eContainingClass.transformType()/]>()) ;
+			[/for]
+			[else]
+			[aReference.name/] = factory->create[aEClass.name/]() ; // TODO '[aReference.name/]' needs a container
+			[/if]
+			[/let]
+			[else]
+			std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " the back-reference Class of '[aReference.name/]' is abstract." << std::endl;
+			[/if]
+			[/let]
 [/if]
-//[aReference.eContainingClass.name/]
-//[aReference.eType.name/]
-//[aReference.name/]
-//[aReference.eClass()/]
-
 
 			// 2. Report Handler to set '[aReference.name/]' as new current Object.
 			handler->setCurrentObj([aReference.name/]);
