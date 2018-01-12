@@ -112,6 +112,7 @@ virtual public [ClassWithNamespace(aClass, sClass)/]Impl[/for][if (aClass.eSuper
 			
 			[aClass.generateeGetDel(true)/]
 
+			[aClass.generateEContainerOperation(true)/] 
 			
 			//*********************************
 			// Persistence Functions
