@@ -216,6 +216,8 @@ std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStat
 //*********************************
 [aClass.generateUnionGetterCpp()/]
 
+[aClass.generateEContainerOperationCPP()/]
+
 //*********************************
 // Structural Feature Getter/Setter
 //*********************************
@@ -228,8 +230,6 @@ std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStat
 void [aClass.name.concat('Impl')/]::load(std::shared_ptr<persistence::XHandler> handler) 
 {
 try{
-	std::cout << "| WARNING  | " << " Called " << __PRETTY_FUNCTION__ << " while is not implemented yet." << std::endl;
-
 	// get EcoreFactory
 	std::shared_ptr<ecore::EcoreFactory> factory = ecore::EcoreFactory::eInstance();
 	
@@ -298,13 +298,14 @@ try{
 	
 	// Set References (containment == false)
 	std::shared_ptr<ecore::EClass> metaClass = this->eClass(); // get MetaClass
-	std::shared_ptr<ecore::EStructuralFeature> esf;
 [for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.unsettable = true))->asOrderedSet()->sortedBy(name)) separator ('\n')]
-	// TODO handle references to other objects
-	std::cout << "| WARNING  | " << __PRETTY_FUNCTION__ << " handle references to other objects '[aReference.name/]'" << " [aReference.eType/]" << std::endl; 
-	//[aReference.name/]->setContainer( this ); // TODO remove comment
-	// TODO here
-	esf = metaClass->getEStructuralFeature("[aReference.name/]");
+	std::cout << "| WARNING  | " << __PRETTY_FUNCTION__ << " handle references to other objects '[aReference.name/]'" << std::endl; 
+	iter = attr_list.find("[aReference.name/]");
+	if ( iter != attr_list.end() )
+	{
+		// add unresolvedReference to handler's list
+		handler->addUnresolvedReference(iter->second, handler->getCurrentObj(), metaClass->getEStructuralFeature("[aReference.name/]")); // TODO use getEStructuralFeature() with id, for faster access to EStructuralFeature
+	}
 [/for]
 
 	//
@@ -362,7 +363,10 @@ try{
 			[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>(factory->create("[aEClass.name/]", handler->getCurrentObj(), [aReference.metamodelPackageNameForEstructuralFeture(aClass)/]::[aReference.memberNameUpper()/])) ;			
 			[/for]
 			[else]
-			[aReference.name/] = factory->create[aEClass.name/]() ; // TODO '[aReference.name/]' needs a container
+			[aReference.name/] = factory->create[aEClass.name/]() ; 
+			// Insert '[aReference.name/]' to corresponding container's reference
+			[aReference.generateReferenceType()/] list_[aReference.name/] = this->[aReference.GetterName()/]();
+			list_[aReference.name/]->push_back([aReference.name/]);
 			[/if]
 			[/let]
 			[else]
@@ -412,7 +416,7 @@ void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> 
 // Attributes that are from type EJavaClass (void*) has not to export to xml. 
 [/comment]
 [if (not(aAttribute.upperBound = 1))]
-	handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() ); // upperBound != 1 so [aAttribute.GetterName()/]() is a list/bag/union 
+	handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() ); // TODO verify, if type is correct, because upperBound != 1 so [aAttribute.GetterName()/]() is a list/bag/union 
 [else]
 	[if (aAttribute.defaultValueLiteral->notEmpty())]
 	if ( this->[aAttribute.GetterName()/]() != [if (aAttribute.eType.oclIsTypeOf(EEnum))][aAttribute.eType.name/]::[aAttribute.defaultValueLiteral.toUpperCase()/][else][aAttribute.defaultValueLiteral/][/if] ) // default: [aAttribute.name/] = [if (aAttribute.eType.oclIsTypeOf(EEnum))][aAttribute.eType.name/]::[aAttribute.defaultValueLiteral.toUpperCase()/][else][aAttribute.defaultValueLiteral/][/if]
@@ -532,13 +536,13 @@ void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> 
 		for ( std::shared_ptr<[aReference.eType.generateType()/]> [aReference.name/] : *list_[aReference.name/] ) {
 			handler->createAndAddElement( "[aReference.name/]" );
 [if (aReference.eType.oclAsType(EClass).abstract = true)]
-			handler->addAttribute( "xsi:type", handler->getType([aReference.name/]) );
+			handler->addAttribute( "xsi:type", handler->extractType([aReference.name/]) );
 [/if]
 [comment]
 			std::shared_ptr<ecore::EClass> meta_class = [aReference.name/]->eClass();
 			if (meta_class->getName().compare("[aReference.eType.name/]") != 0)
 			{
-				handler->addAttribute( "xsi:type", handler->getType([aReference.name/]) );
+				handler->addAttribute( "xsi:type", handler->extractType([aReference.name/]) );
 			}
 [/comment]
 			[aReference.name/]->save( handler ); // recusive call
