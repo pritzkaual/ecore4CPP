@@ -138,6 +138,7 @@ virtual public [ClassWithNamespace(aClass,sClass)/][/for]
 			// Persistence Functions
 			//*********************************
 			virtual void load(std::shared_ptr<persistence::XHandler> handler) = 0;
+			virtual void resolveReferences(const int featureID, std::list<std::shared_ptr<ecore::EObject> > references) = 0;
 			virtual void save(std::shared_ptr<persistence::XHandler> handler) const = 0;
 
 	};

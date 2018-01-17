@@ -111,6 +111,7 @@ virtual public [ClassWithNamespace(aClass, sClass)/]Impl[/for][if (aClass.eSuper
 			//*********************************
 			
 			[aClass.generateeGetDel(true)/]
+			[aClass.generateeSetDel(true)/]
 
 			[aClass.generateEContainerOperation(true)/] 
 			
@@ -118,6 +119,7 @@ virtual public [ClassWithNamespace(aClass, sClass)/]Impl[/for][if (aClass.eSuper
 			// Persistence Functions
 			//*********************************
 			virtual void load(std::shared_ptr<persistence::XHandler> handler);
+			virtual void resolveReferences(const int featureID, std::list<std::shared_ptr<ecore::EObject> > references);
 			virtual void save(std::shared_ptr<persistence::XHandler> handler) const;
 
 		protected:
