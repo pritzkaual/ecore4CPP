@@ -228,7 +228,7 @@ std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStat
 //*********************************
 // Persistence Functions
 //*********************************
-void [aClass.name.concat('Impl')/]::load(std::shared_ptr<persistence::XHandler> handler) 
+void [aClass.name.concat('Impl')/]::load(std::shared_ptr<persistence::XLoadHandler> handler) 
 {
 try{
 	// get EcoreFactory
@@ -382,7 +382,7 @@ try{
 			[aReference.name/]->load(handler);
 
 			// 4. Report Handler to set 'this' as new current Object.
-			handler->releaseObj(); // TODO use later API release() of LoadHandler.
+			handler->release();
 
 			// 5. Add '[aReference.name/]' to Handler's internal Map, that is used for resolving references.
 			handler->addToMap([aReference.name/]);
@@ -432,7 +432,7 @@ void [aClass.name.concat('Impl')/]::resolveReferences(const int featureID, std::
 	}
 }
 
-void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XHandler> handler) const
+void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XSaveHandler> handler) const
 {
 	//
 	// Add attributes
