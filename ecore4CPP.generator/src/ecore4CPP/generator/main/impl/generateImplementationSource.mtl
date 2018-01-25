@@ -228,78 +228,76 @@ std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStat
 //*********************************
 // Persistence Functions
 //*********************************
-void [aClass.name.concat('Impl')/]::load(std::shared_ptr<persistence::XLoadHandler> handler) 
+void [aClass.name.concat('Impl')/]::load(std::shared_ptr<persistence::interface::XLoadHandler> handler) 
 {
 try{
 	// get EcoreFactory
 	std::shared_ptr<ecore::EcoreFactory> factory = ecore::EcoreFactory::eInstance();
 	
+	//
 	// Set Attributes
-
-	// get list of current Node Attributes	
+	//
+	// Get list of current Node Attributes	
 	std::map<std::string, std::string> attr_list = handler->getAttributeList();
 	
 	std::map<std::string, std::string>::const_iterator iter;
 
 [for (aAttribute : EAttribute | aClass.eAllAttributes->select(eAtt: EAttribute|(eAtt.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
-[if (aAttribute.eType.oclIsKindOf(EDataType) and not(aAttribute.eType.name = 'EJavaClass'))]
+  [if (aAttribute.eType.oclIsKindOf(EDataType) and not(aAttribute.eType.name = 'EJavaClass'))]
 [comment]
 // Attributes that are from type EJavaClass (void*) has not to export to xml. 
 [/comment]
-[if (not(aAttribute.upperBound = 1))]
+	[if (not(aAttribute.upperBound = 1))]
 	//handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() ); // upperBound != 1 so [aAttribute.GetterName()/]() is a list/bag/union
 	// TODO needs an implementation to set list of strings to this attribute
 	std::cout << "| ERROR    | " << __PRETTY_FUNCTION__ << " needs an implementation to set list of strings to this attribute." << std::endl; 
-[else]
+	[else]
 	iter = attr_list.find("[aAttribute.name/]");
 	if ( iter != attr_list.end() )
 	{
-[comment]
-//[aAttribute.eType/]
-//[aAttribute.eType.name/]
-[/comment]
-[if (generateType(aAttribute.eType) = 'bool')]
+	  [if (generateType(aAttribute.eType) = 'bool')]
 		// this attribute is a 'bool'
 		bool value;
 		std::istringstream(iter->second) >> std::boolalpha >> value;
-[elseif ((generateType(aAttribute.eType) = 'int'))]
+	  [elseif ((generateType(aAttribute.eType) = 'int'))]
 		// this attribute is a 'int'
 		int value;
 		std::istringstream ( iter->second ) >> value;
-[elseif ((generateType(aAttribute.eType) = 'long'))]
+	  [elseif ((generateType(aAttribute.eType) = 'long'))]
 		// this attribute is a 'long'
 		long value;
 		std::istringstream ( iter->second ) >> value;
-[elseif ((generateType(aAttribute.eType) = 'float'))]
+	  [elseif ((generateType(aAttribute.eType) = 'float'))]
 		// this attribute is a 'float'
 		float value;
 		std::istringstream ( iter->second ) >> value;
-[elseif ((generateType(aAttribute.eType) = 'double'))]
+	  [elseif ((generateType(aAttribute.eType) = 'double'))]
 		// this attribute is a 'double'
 		double value;
 		std::istringstream ( iter->second ) >> value;
-[elseif ((generateType(aAttribute.eType) = 'char'))]
+	  [elseif ((generateType(aAttribute.eType) = 'char'))]
 		// this attribute is a 'char'
 		char value;
 		std::istringstream ( iter->second ) >> value;
-[elseif ((generateType(aAttribute.eType) = 'std::string'))]
+	  [elseif ((generateType(aAttribute.eType) = 'std::string'))]
 		// this attribute is a 'std::string'
 		std::string value;
 		value = iter->second;
-[else]
+	  [else]
 		// TODO this attribute has a non handle type
 		std::cout << "| ERROR    | " << __PRETTY_FUNCTION__ << " handle type of '[aAttribute.name/]'" << " [aAttribute.eType/]" << std::endl; 
 		value = "";
-[/if]
+	  [/if]
 		this->[aAttribute.SetterName()/](value);
 	}
-[/if]
-[/if]
+	[/if]
+  [/if]
 [/for]
-	
+	//
 	// Set References (containment == false)
+	//
 	std::shared_ptr<ecore::EClass> metaClass = this->eClass(); // get MetaClass
-[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.unsettable = true))->asOrderedSet()->sortedBy(name)) separator ('\n')]
+[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.changeable = true))->asOrderedSet()->sortedBy(name)) separator ('\n')]
 	iter = attr_list.find("[aReference.name/]");
 	if ( iter != attr_list.end() )
 	{
@@ -311,34 +309,48 @@ try{
 	//
 	// Create new objects (from references (containment == true))
 	//
+	std::cout << handler->getLevel() << "<" << metaClass->getName() << " ";
+
+	std::shared_ptr<ecore::ENamedElement> _[aClass.name/] = std::dynamic_pointer_cast<ecore::ENamedElement>(handler->getCurrentObject());
+	if(_[aClass.name/])
+	{
+		std::cout << "name='"<< _[aClass.name/]->getName() << "'";
+	}
+	std::cout << ">" << std::endl;
+
+
 	int numNodes = handler->getNumOfChildNodes();
-	//std::cout << "| DEBUG    |" << " ChildNodes: " << numNodes << std::endl;
+	std::cout << handler->getLevel() << "-NumNodes: " << numNodes << std::endl;
 	
 	std::string nodeName;
-	int ii;
-	for(ii = 0; ii < numNodes; ++ii)
+	for(int ii = 0; ii < numNodes; ii++)
 	{
-		//std::cout << "| DEBUG    |" << " Child: " << ii << std::endl;
 		nodeName = handler->getNextNodeName();
+		std::cout << handler->getLevel() << "-Child: "<< nodeName << " " << ii+1 << "/" << numNodes << std::endl;
 
 [for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
 		if ( nodeName.compare("[aReference.name/]") == 0 )
 		{
-[if (aReference.upperBound = 1)]
-			// TODO implement "aReference.upperBound = 1" for '[aReference.name/]'
-			std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " implement 'aReference.upperBound = 1' for '[aReference.name/]'" << std::endl;
-[else]
+  [if (aReference.upperBound = 1)]
 			/* 
 			 * Create and load '[aReference.name/]'
 			 */
 			std::shared_ptr<[aReference.eType.generateType()/]> [aReference.name/];
 
 			// 1. Create new Object '[aReference.name/]' with Factory and set Container to Object 'this.
-[comment]
-//[aReference.eType.oclAsType(EClass).abstract/]
-//[aReference.eType/]
-[/comment]
-[if (aReference.eType.oclAsType(EClass).abstract = true)]
+	[let aEClass : EClass = aReference.eType.oclAsType(EClass)]
+			[aReference.name/] = factory->create[aEClass.name/]() ; 
+			
+			// 1.x Insert '[aReference.name/]' to corresponding container's reference
+			this->[aReference.SetterName()/]([aReference.name/]);
+	[/let]
+  [else]
+			/* 
+			 * Create and load '[aReference.name/]'
+			 */
+			std::shared_ptr<[aReference.eType.generateType()/]> [aReference.name/];
+
+			// 1. Create new Object '[aReference.name/]' with Factory and set Container to Object 'this.
 			attr_list = handler->getAttributeList();
 			iter = attr_list.find("xsi:type");
 			if ( iter != attr_list.end() )
@@ -347,48 +359,117 @@ try{
 				size_t const double_dot = _type.find(L':', 0);
 				std::string _type_ns = _type.substr(0, double_dot); // TODO '_type_ns' is not used in this case
 				std::string _type_name = _type.substr(double_dot + 1);
-				[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>(factory->create(_type_name, handler->getCurrentObject()));
+	  [let aEClass : EClass = aReference.eType.oclAsType(EClass)]
+		[let ref:OrderedSet(EReference) = aEClass.getAllContainers()]
+		[if(ref->size() > 0)]
+			[if(ref->size() > 1)]
+				// TODO here are multiple containers of same object. Check this!
+				std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " '[aReference.name/]' has more then one back-reference Object." << std::endl;
+			
+			[/if]
+			[for(aBackReference : EReference | ref->sortedBy(name))]
+				[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>(factory->create(_type_name, handler->getCurrentObject(), [aReference.metamodelPackageNameForEstructuralFeture(aClass)/]::[aReference.memberNameUpper()/])) ;			
+			[/for]
+		[else]
+				[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>( factory->create(_type_name) ); 
+		[/if]
+			}
+			else
+			{
+		[if(ref->size() > 0)]
+			[if(ref->size() > 1)]
+				// TODO here are multiple containers of same object. Check this!
+				std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " '[aReference.name/]' has more then one back-reference Object." << std::endl;
+			
+			[/if]
+			[for(aBackReference : EReference | ref->sortedBy(name))]
+				[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>(factory->create("[aEClass.name/]", handler->getCurrentObject(), [aReference.metamodelPackageNameForEstructuralFeture(aClass)/]::[aReference.memberNameUpper()/])) ;			
+			[/for]
+		[else]
+				[aReference.name/] = factory->create[aEClass.name/]() ; 
+		[/if]
+			}
+		[if(ref->size() = 0)]
+			// 1.x Insert '[aReference.name/]' to corresponding container's reference
+			[aReference.generateReferenceType()/] list_[aReference.name/] = this->[aReference.GetterName()/]();
+			list_[aReference.name/]->push_back([aReference.name/]);
+		[/if]
+		[/let]
+	  [/let]
+			
+[comment]
+	[if (aReference.eType.oclAsType(EClass).abstract = true)]
+			attr_list = handler->getAttributeList();
+			iter = attr_list.find("xsi:type");
+			if ( iter != attr_list.end() )
+			{
+				std::string _type = iter->second;
+				size_t const double_dot = _type.find(L':', 0);
+				std::string _type_ns = _type.substr(0, double_dot); // TODO '_type_ns' is not used in this case
+				std::string _type_name = _type.substr(double_dot + 1);
+	  [let aEClass : EClass = aReference.eType.oclAsType(EClass)]
+		[let ref:OrderedSet(EReference) = aEClass.getAllContainers()]
+		[if(ref->size() > 0)]
+			[if(ref->size() > 1)]
+				// TODO here are multiple containers of same object. Check this!
+				std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " '[aReference.name/]' has more then one back-reference Object." << std::endl;
+			
+			[/if]
+			[for(aBackReference : EReference | ref->sortedBy(name))]
+				[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>(factory->create(_type_name, handler->getCurrentObject(), [aReference.metamodelPackageNameForEstructuralFeture(aClass)/]::[aReference.memberNameUpper()/])) ;			
+			[/for]
+		[else]
+				[aReference.name/] = factory->create(_type_name) ; 
+			
+				// 1.x Insert '[aReference.name/]' to corresponding container's reference
+				[aReference.generateReferenceType()/] list_[aReference.name/] = this->[aReference.GetterName()/]();
+				list_[aReference.name/]->push_back([aReference.name/]);
+		[/if]
+		[/let]
+	  [/let]
 			}
 			else
 			{
 				std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " no xsi:type for attribute '[aReference.name/]'" << std::endl;
 			}
-[else]
-			[let aEClass : EClass = aReference.eType.oclAsType(EClass)]
-			[if (aEClass.abstract = false)]
-			[let ref:OrderedSet(EReference) = aEClass.getAllContainers()]
-			[if(ref->size() > 0)]
+	[else]
+	  [let aEClass : EClass = aReference.eType.oclAsType(EClass)]
+		[let ref:OrderedSet(EReference) = aEClass.getAllContainers()]
+		[if(ref->size() > 0)]
+			[if(ref->size() > 1)]
+			// TODO here are multiple containers of same object. Check this!
+			std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " '[aReference.name/]' has more then one back-reference Object." << std::endl;
+			
+			[/if]
 			[for(aBackReference : EReference | ref->sortedBy(name))]
 			[aReference.name/] = std::dynamic_pointer_cast<[aReference.eType.generateType()/]>(factory->create("[aEClass.name/]", handler->getCurrentObject(), [aReference.metamodelPackageNameForEstructuralFeture(aClass)/]::[aReference.memberNameUpper()/])) ;			
 			[/for]
-			[else]
+		[else]
 			[aReference.name/] = factory->create[aEClass.name/]() ; 
 			
 			// 1.x Insert '[aReference.name/]' to corresponding container's reference
 			[aReference.generateReferenceType()/] list_[aReference.name/] = this->[aReference.GetterName()/]();
 			list_[aReference.name/]->push_back([aReference.name/]);
-			[/if]
-			[/let]
-			[else]
-			std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " the back-reference Class of '[aReference.name/]' is abstract." << std::endl;
-			[/if]
-			[/let]
-[/if]
-
+		[/if]
+		[/let]
+	  [/let]
+	[/if]
+[/comment]
+  [/if]
+			
 			// 2. Report Handler to set '[aReference.name/]' as new current Object.
 			handler->setCurrentObject([aReference.name/]);
 
 			// 3. Call recursively '[aReference.name/].load().
 			[aReference.name/]->load(handler);
 
-			// 4. Report Handler to set 'this' as new current Object.
-			handler->release();
-
-			// 5. Add '[aReference.name/]' to Handler's internal Map, that is used for resolving references.
+			// 4. Add '[aReference.name/]' to Handler's internal Map, that is used for resolving references.
 			handler->addToMap([aReference.name/]);
-[/if]
 		}
 [/for]
+
+		// Report Handler to set 'this' as new current Object.
+		handler->release();
 	}
 }
 catch (std::exception& e)
@@ -405,13 +486,17 @@ void [aClass.name.concat('Impl')/]::resolveReferences(const int featureID, std::
 {
 	switch(featureID)
 	{
-	[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.unsettable = true))->asOrderedSet()->sortedBy(name)) separator ('\n')]
+	[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.changeable = true))->asOrderedSet()->sortedBy(name)) separator ('\n')]
 		case [aReference.metamodelPackageNameForEstructuralFeture(aClass)/]::[aReference.memberNameUpper()/]:
 		{
 		[if (aReference.upperBound = 1)]
 			if (references.size() == 1)
 			{
-				eSet(featureID, references.front());
+				// Cast object to correct type
+				std::shared_ptr<[aReference.eGenericType.generateCppType()/]> _[aReference.name/] = std::dynamic_pointer_cast<[aReference.eGenericType.generateCppType()/]>( references.front() );
+
+				// Add object by calling eSet() 
+				eSet(featureID, _[aReference.name/]);
 			}
 			
 		[else]
@@ -432,120 +517,35 @@ void [aClass.name.concat('Impl')/]::resolveReferences(const int featureID, std::
 	}
 }
 
-void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XSaveHandler> handler) const
+void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::interface::XSaveHandler> handler) const
 {
+	// get EcorePackage
+	std::shared_ptr<ecore::EcorePackage> package = ecore::EcorePackage::eInstance();	
+	
+	// get MetaClass
+	std::shared_ptr<ecore::EClass> metaClass = this->eClass();
+	
 	//
 	// Add attributes
 	//
 [for (aAttribute : EAttribute | aClass.eAllAttributes->select(eAtt: EAttribute|(eAtt.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
-[if (aAttribute.eType.oclIsKindOf(EDataType) and not(aAttribute.eType.name = 'EJavaClass'))]
+  [if (aAttribute.eType.oclIsKindOf(EDataType) and not(aAttribute.eType.name = 'EJavaClass'))]
 [comment]
 // Attributes that are from type EJavaClass (void*) has not to export to xml. 
 [/comment]
-[if (not(aAttribute.upperBound = 1))]
-	handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() ); // TODO verify, if type is correct, because upperBound != 1 so [aAttribute.GetterName()/]() is a list/bag/union 
-[else]
-	[if (aAttribute.defaultValueLiteral->notEmpty())]
-	if ( this->[aAttribute.GetterName()/]() != [if (aAttribute.eType.oclIsTypeOf(EEnum))][aAttribute.eType.name/]::[aAttribute.defaultValueLiteral.toUpperCase()/][else][aAttribute.defaultValueLiteral/][/if] ) // default: [aAttribute.name/] = [if (aAttribute.eType.oclIsTypeOf(EEnum))][aAttribute.eType.name/]::[aAttribute.defaultValueLiteral.toUpperCase()/][else][aAttribute.defaultValueLiteral/][/if]
+	if ( this->eIsSet(package->get[aAttribute.memberName()/]()) )
 	{
 		handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() );
 	}
-	[else]
-	handler->addAttribute( "[aAttribute.name/]", this->[aAttribute.GetterName()/]() );
-	[/if]
-[/if]
-[else]
-// [aAttribute.eType/]
-[/if]
+  [else]
+	// TODO '[aAttribute.eType/]' Attribute's eType is a EJavaClass or its eClass is not typeof EDataType
+  [/if]
 [/for]
-
-[comment]
-//1.0 (eRef.containment = false)
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//1.1 (eRef.containment = true)
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//2.0 (eRef.containment = false or eRef.hasSubset()) and (not eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false or eRef.hasSubset()) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//2.1 (eRef.containment = false or eRef.hasSubset()) and (eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false or eRef.hasSubset()) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//2.2 (eRef.containment = true or eRef.hasSubset()) and (not eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true or eRef.hasSubset()) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//2.3 (eRef.containment = true or eRef.hasSubset()) and (eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true or eRef.hasSubset()) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//3.0 (eRef.containment = true or eRef.hasSubset())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true or eRef.hasSubset()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//3.1 (eRef.containment = false or eRef.hasSubset())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false or eRef.hasSubset()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//4.0 (eRef.containment = true) and (not eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true ) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//4.1 (eRef.containment = true) and (eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//4.2 (eRef.containment = false) and (not eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//4.3 (eRef.containment = false) and (eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false ) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-
-//5.0 (eRef.hasSubset()) and (not eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.hasSubset()) and (not eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//5.1 (eRef.hasSubset()) and (eRef.isUnion())
-[for (ref : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.hasSubset()) and (eRef.isUnion()))->asOrderedSet()->sortedBy(name))]
-[ref.name/]
-[/for]
-
-//6 sollte funktionieren (ungetestet)
-[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false ))->asOrderedSet()->sortedBy(name))]
-[if (hasDocKeyX('suppressedIsSetVisibility'))]
-	handler->addReference("[aReference.name/]", this->[aReference.GetterName()/]());
-[else]
-// [aReference.name/]
-[/if]
-[/for]
-
-[/comment]
 
 	//
 	// Add references
 	//
-[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.unsettable = true))->asOrderedSet()->sortedBy(name))]
+[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = false) and (eRef.transient = false) and (eRef.changeable = true))->asOrderedSet()->sortedBy(name))]
 	[if (aReference.upperBound = 1)]
 	handler->addReference("[aReference.name/]", this->[aReference.GetterName()/]());
 	[else]
@@ -556,40 +556,44 @@ void [aClass.name.concat('Impl')/]::save(std::shared_ptr<persistence::XSaveHandl
 	//
 	// Add new tags (from references)
 	//
+
 [for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
 	// Save '[aReference.name/]'
-
-[if (aReference.upperBound = 1)]
+	[if (aReference.upperBound = 1)]
 	[aReference.generateReferenceType()/] [aReference.name/] = this->[aReference.GetterName()/]();
 	if ( [aReference.name/] != nullptr) 
 	{
-		std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " this case is not tested yet 'aReference.upperBound = 1' for '[aReference.name/]'" << std::endl;
-[else]
+		std::shared_ptr<ecore::EStructuralFeature> esf = metaClass->getEStructuralFeature( "[aReference.name/]" ); // TODO use if instead of string to return ESF
+
+	[else]
 	[aReference.generateReferenceType()/] list_[aReference.name/] = this->[aReference.GetterName()/]();
 	if ( list_[aReference.name/]->size() != 0) 
 	{
+		std::shared_ptr<ecore::EStructuralFeature> esf = metaClass->getEStructuralFeature( "[aReference.name/]" ); // TODO use if instead of string to return ESF
+
 		for ( std::shared_ptr<[aReference.eType.generateType()/]> [aReference.name/] : *list_[aReference.name/] ) 
 		{
-[/if]
+	[/if]
 			// 1. Create and add Node-Element to model-tree
 			handler->createAndAddElement( "[aReference.name/]" );
 
-[if (aReference.eType.oclAsType(EClass).abstract = true)]
-			// 1.x Set Attribute "xsi:type" to the specific Class-Type
-			handler->addAttribute( "xsi:type", handler->extractType([aReference.name/]) );
+			if([aReference.name/]->eClass() != esf->getEType())
+			{
+				// 1.x Set Attribute "xsi:type" to the specific Class-Type
+				handler->addAttribute( "xsi:type", handler->extractType([aReference.name/]) );
+			}
 
-[/if]
 			// 2. Recursive call of save()
 			[aReference.name/]->save( handler );
 			
 			// 3. Tell handler for stepping to previous level
 			handler->release(); 
-[if (aReference.upperBound = 1)]
+	[if (aReference.upperBound = 1)]
 	}
-[else]
+	[else]
 		}
 	}
-[/if]
+	[/if]
 [/for]
 
 }
