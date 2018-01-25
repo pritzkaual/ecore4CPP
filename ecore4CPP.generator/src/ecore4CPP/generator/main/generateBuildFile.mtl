@@ -83,7 +83,6 @@ INCLUDE_DIRECTORIES(
 [/if]
 	${MDE4CPP_HOME}/application/include
 	${MDE4CPP_HOME}/application/include/abstractDataTypes
-	${MDE4CPP_HOME}/application/include/persistence
 if(NOT UNIX)
 	${MDE4CPP_HOME}/application/include/PluginFramework
 endif()
