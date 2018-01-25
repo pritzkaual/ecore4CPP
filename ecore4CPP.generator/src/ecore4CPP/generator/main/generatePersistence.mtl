@@ -14,9 +14,9 @@
  */]
 [module generatePersistence('http://www.eclipse.org/emf/2002/Ecore')]
 
-[import ecore4CPP::generator::main::generateClass /]
 [import ecore4CPP::generator::main::generateType /]
 [import ecore4CPP::generator::main::helper /]
+
 
 [template public generatePersistenceNSPath(path : EBoolean)]
 [if(path)]persistence/interface[else]persistence::interface[/if]
@@ -136,6 +136,8 @@ void [aClass.name.concat('Impl')/]::load(std::shared_ptr<[generatePersistenceNSP
 		//
 		// Create new objects (from references (containment == true))
 		//
+		int numNodes = handler->getNumOfChildNodes();
+[comment]
 		std::cout << handler->getLevel() << "<" << metaClass->getName() << " ";
 	
 		std::shared_ptr<[needNamespace(aClass.ePackage, 'ENamedElement')/]> _[aClass.name/] = std::dynamic_pointer_cast<[needNamespace(aClass.ePackage, 'ENamedElement')/]>(handler->getCurrentObject());
@@ -144,17 +146,15 @@ void [aClass.name.concat('Impl')/]::load(std::shared_ptr<[generatePersistenceNSP
 			std::cout << "name='"<< _[aClass.name/]->getName() << "'";
 		}
 		std::cout << ">" << std::endl;
-	
-	
-		int numNodes = handler->getNumOfChildNodes();
 		std::cout << handler->getLevel() << "-NumNodes: " << numNodes << std::endl;
-		
+[/comment]
 		std::string nodeName;
 		for(int ii = 0; ii < numNodes; ii++)
 		{
 			nodeName = handler->getNextNodeName();
+[comment]
 			std::cout << handler->getLevel() << "-Child: "<< nodeName << " " << ii+1 << "/" << numNodes << std::endl;
-	
+[/comment]
 	[for (aReference : EReference | aClass.eAllReferences->select(eRef: EReference|(eRef.containment = true) and (eRef.transient = false))->asOrderedSet()->sortedBy(name)) separator ('\n')]
 			if ( nodeName.compare("[aReference.name/]") == 0 )
 			{
@@ -191,7 +191,7 @@ void [aClass.name.concat('Impl')/]::load(std::shared_ptr<[generatePersistenceNSP
 			[if(ref->size() > 0)]
 				[if(ref->size() > 1)]
 					// TODO here are multiple containers of same object. Check this!
-					std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " '[aReference.name/]' has more then one back-reference Object." << std::endl;
+					std::cout << "| ERROR    | " << __PRETTY_FUNCTION__ << " '[aReference.name/]' has more then one back-reference Object." << std::endl;
 				
 				[/if]
 				[for(aBackReference : EReference | ref->sortedBy(name))]
@@ -206,7 +206,7 @@ void [aClass.name.concat('Impl')/]::load(std::shared_ptr<[generatePersistenceNSP
 			[if(ref->size() > 0)]
 				[if(ref->size() > 1)]
 					// TODO here are multiple containers of same object. Check this!
-					std::cout << "| ERROR    |" << __PRETTY_FUNCTION__ << " '[aReference.name/]' has more then one back-reference Object." << std::endl;
+					std::cout << "| ERROR    | " << __PRETTY_FUNCTION__ << " '[aReference.name/]' has more then one back-reference Object." << std::endl;
 				
 				[/if]
 				[for(aBackReference : EReference | ref->sortedBy(name))]
@@ -242,11 +242,11 @@ void [aClass.name.concat('Impl')/]::load(std::shared_ptr<[generatePersistenceNSP
 	}
 	catch (std::exception& e)
 	{
-		std::cout << e.what() << std::endl;
+		std::cout << "| ERROR    | " << e.what() << std::endl;
 	}
 	catch (...) 
 	{
-		std::cout << "Exception occurred" << std::endl;
+		std::cout << "| ERROR    | " <<  "Exception occurred" << std::endl;
 	}
 }
 [/template]
@@ -372,11 +372,11 @@ void [aClass.name.concat('Impl')/]::save(std::shared_ptr<[generatePersistenceNSP
 	}
 	catch (std::exception& e)
 	{
-		std::cout << e.what() << std::endl;
+		std::cout << "| ERROR    | " << e.what() << std::endl;
 	}
 	catch (...) 
 	{
-		std::cout << "Exception occurred" << std::endl;
+		std::cout << "| ERROR    | " << "Exception occurred" << std::endl;
 	}
 }
 [/template]
