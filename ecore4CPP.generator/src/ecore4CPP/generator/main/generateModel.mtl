@@ -15,6 +15,7 @@
 [module generateModel('http://www.eclipse.org/emf/2002/Ecore')]
  
 [import ecore4CPP::generator::main::generateAttribute/]
+[import ecore4CPP::generator::main::generateClass/]
 [import ecore4CPP::generator::main::generateOperation/]
 [import ecore4CPP::generator::main::generatePersistence/]
 [import ecore4CPP::generator::main::generateReference/]
@@ -28,12 +29,25 @@
 [file (aClass.ePackage.name.concat('/').concat(aClass.name.toUpperFirst()).concat('.hpp'), false, 'UTF-8')]
 [startGuard(aClass)/]
 
-#include <string>
+[if (aClass.eOperations.eParameters.eType->select(name = 'EMap')->size() > 0 or aClass.eAttributes.eType->select(name = 'EMap')->size() > 0)]
 #include <map>
-#include <vector>
-#include "SubsetUnion.hpp"
-#include "boost/shared_ptr.hpp"
+[/if]
+#include <memory>
+#include <string>
+
+[if (aClass.eAttributes.eType->select(requiresAny())->size() > 0)]
 #include "boost/any.hpp"
+[/if]
+
+// forward declarations
+[generateAbstractDataTypesForwardDeclaration()/]
+
+[if (aClass.eAttributes.eType->select(requiresAny())->size() = 0 and aClass.eOperations.eParameters.eType->select(requiresAny())->size() > 0)]
+namespace boost
+{
+	class any;
+}
+[/if]
 
 [generatePersistenceInclude()/]
 
@@ -50,16 +64,16 @@ namespace [element.ePackage.name/]
 
 // base class includes
 [for (elements : EClassifier| aClass.eSuperTypes->asOrderedSet()->sortedBy(name)) separator ('\n')]
-#include "[elements.name.toUpperFirst().concat('.hpp')/]"
+#include "[elements.ePackage.name/]/[elements.name.toUpperFirst().concat('.hpp')/]"
 [/for]
 
 // enum includes
 [for (elements : EEnum| aClass.includes()->selectByKind(EEnum)->asOrderedSet()->sortedBy(name)) separator ('\n')]
-#include "[elements.name.toUpperFirst().concat('.hpp')/]"
+#include "[elements.ePackage.name/]/[elements.name.toUpperFirst().concat('.hpp')/]"
 [/for]
 
 [if (aClass.eSuperTypes->isEmpty() and not (aClass.name ='EObject'))]
-#include "EObject.hpp"
+#include "ecore/EObject.hpp"
 [/if]
 
 //*********************************
@@ -138,7 +152,6 @@ virtual public [ClassWithNamespace(aClass,sClass)/][/for]
 			// Persistence Functions
 			//*********************************
 			[aClass.generatePersistenceDecl(false)/]
-
 	};
 
 }

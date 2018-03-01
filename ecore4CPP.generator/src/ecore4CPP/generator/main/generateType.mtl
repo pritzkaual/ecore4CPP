@@ -82,19 +82,22 @@ m_[m.oclAsType(EReference).name/][/for][/let]
 
 [template public generateReferenceType(eReference : EReference, pointer : Boolean) post(trim())]
 [if (eReference.upperBound = 1)]
-[if(pointer)][eReference.pointertype()/]<[/if][eReference.eGenericType.generateCppType()/] [if(pointer)]>[/if][else]
-[if(eReference.oclAsType(EModelElement).isSubsetUnion() or (eReference.oclAsType(EModelElement).hasSubset() and eReference.oclAsType(EModelElement).subsetIsUnion()))]
-		[if(pointer)]std::shared_ptr<[/if]SubsetUnion<[eReference.eGenericType.generateCppType()/], [generateSubsetType(eReference)/] > [if(pointer)]>[/if]
-[elseif(eReference.oclAsType(EModelElement).hasSubset())]
-		[if(pointer)]std::shared_ptr<[/if]Subset<[eReference.eGenericType.generateCppType()/], [generateSubsetType(eReference)/] > [if(pointer)]>[/if]
-	[elseif(eReference.oclAsType(EModelElement).isUnion())]
-		[if(pointer)]std::shared_ptr<[/if]Union<[eReference.eGenericType.generateCppType()/]> [if(pointer)]>[/if][else]
-	[if(pointer)]std::shared_ptr<[/if] Bag<[eReference.eGenericType.generateCppType()/]> [if(pointer)]>[/if]
+	[if(pointer)][eReference.pointertype()/]<[/if][eReference.eGenericType.generateCppType()/] [if(pointer)]>[/if]
+[else]
+	[if(eReference.isSubsetUnion())]
+		[if(pointer)]std::shared_ptr<[/if]SubsetUnion<[eReference.eGenericType.generateCppType()/], [generateSubsetType(eReference)/]>[if(pointer)]>[/if]
+	[elseif(eReference.hasSubset())]
+		[if(pointer)]std::shared_ptr<[/if]Subset<[eReference.eGenericType.generateCppType()/], [generateSubsetType(eReference)/]>[if(pointer)]>[/if]
+	[elseif(eReference.isUnion())]
+		[if(pointer)]std::shared_ptr<[/if]Union<[eReference.eGenericType.generateCppType()/]>[if(pointer)]>[/if]
+	[else]
+		[if(pointer)]std::shared_ptr<[/if]Bag<[eReference.eGenericType.generateCppType()/]>[if(pointer)]>[/if]
 	[/if]
 [/if]
 [/template]
 
-[query public isBackReference(aReference:EReference) : Boolean = aReference.container /]
+[query private isShared(aReference : EReference) : Boolean = if (aReference.hasKey('AggregationKind')) then aReference.valueKey('AggregationKind')='shared' else false endif/]
+[query public isBackReference(aReference:EReference) : Boolean = aReference.container or isShared()/]
 
 [template public pointertype(aReference : EReference) post(trim())]
 [if(isBackReference())]
@@ -166,7 +169,7 @@ float
 [/template]
 
 [template public transformType(anEClassifier : EClassifier) ? (name = 'EEList')]
-std::vector
+Bag
 [/template]
 
 [template public transformType(anEClassifier : EClassifier) ? (name = 'EDate')]
@@ -182,7 +185,7 @@ boost::any
 [/template]
 
 [template public transformType(anEClassifier : EClassifier) ? (name = 'ETreeIterator')]
-std::vector
+Bag
 [/template]
 
 [template public transformType(anEClassifier : EClassifier) ? (name = 'EJavaClass')]
@@ -204,3 +207,5 @@ std::string
 [template public transformType(anEClassifier : EClassifier) ? (oclIsKindOf(EEnum))]
 [anEClassifier.name/]
 [/template]
+
+[query public requiresAny(anEClassifier : EClassifier) : Boolean = if (oclIsUndefined()) then true else (name = 'EEnumerator' or name = 'EDiagnosticChain' or name = 'EJavaObject') endif/]

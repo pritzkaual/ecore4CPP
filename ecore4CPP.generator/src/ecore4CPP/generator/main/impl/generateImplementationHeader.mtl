@@ -15,6 +15,7 @@
 [module generateImplementationHeader('http://www.eclipse.org/emf/2002/Ecore')]
 
 [import ecore4CPP::generator::main::generateAttribute /]
+[import ecore4CPP::generator::main::generateClass /]
 [import ecore4CPP::generator::main::generateOperation /]
 [import ecore4CPP::generator::main::generatePersistence/]
 [import ecore4CPP::generator::main::generateReference /]
@@ -33,19 +34,12 @@
 //Model includes
 #include "../[aClass.name.toUpperFirst().concat('.hpp')/]"
 
-[for (sClass : EClass | aClass.eSuperTypes->asOrderedSet()->sortedBy(name)) separator ('\n')]
-#include "impl/[sClass.name.toUpperFirst()/]Impl.hpp"[/for]
+[for (aEClass : EClass | aClass.eSuperTypes->asOrderedSet()->sortedBy(name)) separator ('\n')]
+#include "[aEClass.ePackage.name/]/impl/[aEClass.name.toUpperFirst()/]Impl.hpp"[/for]
 
 [if (not(aClass.name='EObject') and (aClass.eSuperTypes->isEmpty()))]
-#include "impl/EObjectImpl.hpp"
+#include "ecore/impl/EObjectImpl.hpp"
 [/if]
-
-#include "SubsetUnion.hpp"
-
-[if (aClass.hasKey('includes'))]
-[aClass.valueKey('includes')/]
-[/if]
-
 
 //*********************************
 [comment namespace /]
@@ -62,6 +56,7 @@ virtual public [ClassWithNamespace(aClass, sClass)/]Impl[/for][if (aClass.eSuper
 
 		private:    
 			[className/]& operator=([className/] const&) = delete;
+			[aClass.generateGetThisPtr()/]
 
 		protected:
 			friend class [aClass.ePackage.name.concat('FactoryImpl').toUpperFirst()/];

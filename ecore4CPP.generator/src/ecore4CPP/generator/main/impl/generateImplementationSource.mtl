@@ -15,6 +15,7 @@
 [module generateImplementationSource('http://www.eclipse.org/emf/2002/Ecore')]
 
 [import ecore4CPP::generator::main::generateAttribute/]
+[import ecore4CPP::generator::main::generateClass/]
 [import ecore4CPP::generator::main::generateOperation/]
 [import ecore4CPP::generator::main::generatePersistence/]
 [import ecore4CPP::generator::main::generateReference/]
@@ -26,19 +27,28 @@
 
 [template public generateImplementationSource(aClass : EClass) { className : String = aClass.name.toUpperFirst().concat('Impl'); }]
 [file (aClass.ePackage.name.concat('/impl/').concat(className).concat('.cpp'), false, 'UTF-8')]
-#include "[className.concat('.hpp')/]"
-#include <iostream>
+#include "[aClass.ePackage.name/]/impl/[className.concat('.hpp')/]"
+
+[defineDebugMacros()/]
+
 #include <cassert>
-#include "EAnnotation.hpp"
-#include "EClass.hpp"
-#include "[aClass.ePackage.name.toUpperFirst().concat('PackageImpl')/].hpp"
+#include <iostream>
+
+[generateAbstractDataTypesIncludes()/]
+#include "abstractDataTypes/SubsetUnion.hpp"
+[if (aClass.eAttributes.eType->select(requiresAny())->size() = 0 and aClass.eOperations.eParameters.eType->select(requiresAny())->size() > 0)]
+#include "boost/any.hpp"
+[/if]
+#include "ecore/EAnnotation.hpp"
+#include "ecore/EClass.hpp"
+#include "[aClass.ePackage.name/]/impl/[aClass.ePackage.name.toUpperFirst().concat('PackageImpl')/].hpp"
 [if (aClass.hasKey('includes'))]
 [aClass.valueKey('includes')/]
 [/if]
 
 //Forward declaration includes
 [for (element : EClassifier| aClass.includes()->selectByKind(EClass)->asOrderedSet()->sortedBy(name)) separator ('\n')]
-#include "[element.name.toUpperFirst()/].hpp"
+#include "[element.ePackage.name/]/[element.name.toUpperFirst()/].hpp"
 [/for]
 
 
@@ -81,7 +91,6 @@ using namespace [aClass.ePackage.name/];
 #ifdef SHOW_DELETION
 	std::cout << "-------------------------------------------------------------------------------------------------\r\ndelete [aClass.name.toUpperFirst()/] "<< this << "\r\n------------------------------------------------------------------------ " << std::endl;
 #endif
-	[aClass.eReferences->sortedBy(name).generateProtectedReferenceDeleter()/]
 }
 
 
@@ -96,7 +105,7 @@ using namespace [aClass.ePackage.name/];
 				switch(reference_id)
 				{	
 				[for(multipleRef : EReference | ref->select(eType.name = aReference.eType.name)->sortedBy(name))]
-				case [aClass.ePackage.name.toUpperFirst()/]Package::[multipleRef.memberNameUpper()/]:
+				case [aClass.ePackage.name.toUpperFirst()/]Package::[multipleRef.getStaticAttributeIDName()/]:
 					 m_[multipleRef.name/] = par_[aReference.eType.name/];
 					 return;
 				[/for]
@@ -186,7 +195,7 @@ std::shared_ptr<ecore::EObject>  [className/]::copy() const
 
 std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStaticClass() const
 {
-	return [aClass.ePackage.name.concat('PackageImpl').toUpperFirst()/]::eInstance()->get[aClass.name.toUpperFirst()/]();
+	return [aClass.ePackage.name.concat('PackageImpl').toUpperFirst()/]::eInstance()->get[aClass.getMemberNameUpperFirst()/]();
 }
 
 //*********************************
@@ -217,6 +226,7 @@ std::shared_ptr<[needNamespace(aClass.ePackage, 'EClass')/]> [className/]::eStat
 //*********************************
 [aClass.generateUnionGetterCpp()/]
 
+[aClass.generateGetThisPtrCPP()/]
 [aClass.generateEContainerOperationCPP()/]
 
 //*********************************
